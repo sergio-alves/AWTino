@@ -191,3 +191,5 @@ ModelManifest.xml
 Visual Micro/
 WManager.sln
 WManager.zip
+WManager.vcxproj
+WManager.vcxproj.filters

@@ -14,10 +14,10 @@ typedef uint16_t color;
 
 class Graphics : public Adafruit_ST7735 {
 
-  public:
+  public:	
     Graphics(uint8_t CS, uint8_t RS, uint8_t RST);
     void begin(int rotation);
-	void bmpDraw(char *filename, uint8_t x, uint8_t y);
+	void bmpDraw(const char *filename, uint8_t x, uint8_t y, uint8_t width, uint8_t height);
 
 	uint16_t read16(File f);
 	uint32_t read32(File f);

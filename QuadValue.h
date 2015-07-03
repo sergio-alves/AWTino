@@ -25,6 +25,8 @@ public:
 	void setRight(byte);
 	byte getBottom();
 	void setBottom(byte);
+	byte getTopPlusBottom(void);
+	byte getLeftPlusRight(void);
 
 	void set(const QuadValue &);
 

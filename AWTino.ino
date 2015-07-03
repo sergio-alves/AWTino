@@ -1,3 +1,5 @@
+#include "MousePointer.h"
+#include "InputDevice.h"
 #include "Image.h"
 #include "ProgressBar.h"
 #include "QuadValue.h"

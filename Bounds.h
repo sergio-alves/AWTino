@@ -1,6 +1,10 @@
 #ifndef _ALVISOFT_BOUNDS_H
 #define _ALVISOFT_BOUNDS_H
 
+/* 
+	A flat class to store the bounds of a screen or any component. 
+	Added a property to track the rotation 
+ */
 class Bounds
 {
   public:  

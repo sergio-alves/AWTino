@@ -18,7 +18,7 @@ void Graphics::begin(int rotation) {
 };
 
 
-void Graphics::bmpDraw(char *filename, uint8_t x, uint8_t y) {
+void Graphics::bmpDraw(const char *filename, uint8_t x, uint8_t y, uint8_t _width, uint8_t _height) {
 
 	File     bmpFile;
 	int      bmpWidth, bmpHeight;   // W+H in pixels
@@ -42,29 +42,30 @@ void Graphics::bmpDraw(char *filename, uint8_t x, uint8_t y) {
 
 	// Open requested file on SD card
 	if ((bmpFile = SD.open(filename)) == NULL) {
-		Serial.print("File not found");
+		Serial.println("File not found");
+		Serial.flush();
 		return;
 	}
 
 	// Parse BMP header
 	if (read16(bmpFile) == 0x4D42) { // BMP signature
-		Serial.print("File size: "); Serial.println(read32(bmpFile));
+		Serial.print("File size: "); Serial.println(read32(bmpFile)); Serial.flush();
 		(void)read32(bmpFile); // Read & ignore creator bytes
 		bmpImageoffset = read32(bmpFile); // Start of image data
 		Serial.print("Image Offset: "); Serial.println(bmpImageoffset, DEC);
 		// Read DIB header
-		Serial.print("Header size: "); Serial.println(read32(bmpFile));
+		Serial.print("Header size: "); Serial.println(read32(bmpFile)); Serial.flush();
 		bmpWidth = read32(bmpFile);
 		bmpHeight = read32(bmpFile);
 		if (read16(bmpFile) == 1) { // # planes -- must be '1'
 			bmpDepth = read16(bmpFile); // bits per pixel
-			Serial.print("Bit Depth: "); Serial.println(bmpDepth);
+			Serial.print("Bit Depth: "); Serial.println(bmpDepth); Serial.flush();
 			if ((bmpDepth == 24) && (read32(bmpFile) == 0)) { // 0 = uncompressed
 
 				goodBmp = true; // Supported BMP format -- proceed!
-				Serial.print("Image size: ");
+				Serial.print("Image size: "); Serial.flush();
 				Serial.print(bmpWidth);
-				Serial.print('x');
+				Serial.print('x'); Serial.flush();
 				Serial.println(bmpHeight);
 
 				// BMP rows are padded (if needed) to 4-byte boundary
@@ -84,7 +85,7 @@ void Graphics::bmpDraw(char *filename, uint8_t x, uint8_t y) {
 				if ((y + h - 1) >= height()) h = height() - y;
 
 				// Set TFT address window to clipped image bounds
-				setAddrWindow(x, y, x + w - 1, y + h - 1);
+				//setAddrWindow(x, y, x + w - 1, y + h - 1);
 
 				for (row = 0; row<h; row++) { // For each scanline...
 
@@ -114,7 +115,9 @@ void Graphics::bmpDraw(char *filename, uint8_t x, uint8_t y) {
 						b = sdbuffer[buffidx++];
 						g = sdbuffer[buffidx++];
 						r = sdbuffer[buffidx++];
-						pushColor(Color565(r, g, b));
+						//pushColor(Color565(r, g, b));
+						drawPixel(x + col, y + row, Color565(r, g, b));
+
 					} // end pixel
 				} // end scanline
 				Serial.print("Loaded in ");
@@ -125,7 +128,7 @@ void Graphics::bmpDraw(char *filename, uint8_t x, uint8_t y) {
 	}
 
 	bmpFile.close();
-	if (!goodBmp) Serial.println("BMP format not recognized.");
+	if (!goodBmp) Serial.println("BMP format not recognized."); Serial.flush();
 }
 
 // These read 16- and 32-bit types from the SD card file.

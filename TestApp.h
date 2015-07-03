@@ -22,8 +22,9 @@ class TestApp : public GfxApplication, public MouseEvents {
 private:
 	Label * lbl;
 	Button * btn1;
+	Button * btn2;
 	ProgressBar * pb;
-
+	Image * img;
 };
 
 #endif

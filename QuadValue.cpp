@@ -68,3 +68,10 @@ void QuadValue::setBottom(byte b){
 };
 
 
+byte QuadValue::getTopPlusBottom(){
+	return top + bottom;
+}
+
+byte QuadValue::getLeftPlusRight(){
+	return left + right ;
+}

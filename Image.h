@@ -20,6 +20,7 @@ public:
 	const PROGMEM char * getFileName();
 	void setFileName(const PROGMEM char *);
 	void paint(Graphics * g);
+	void calcBounds(void);
 
 protected:
 	 const PROGMEM char * fname;

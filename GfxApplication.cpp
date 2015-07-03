@@ -1,6 +1,12 @@
 #include "GfxApplication.h"
 
-GfxApplication::GfxApplication(void) {
+GfxApplication::GfxApplication(void) : GfxApplication(NULL, NULL){
+	g = new Graphics(TFT_DISP_CS, TFT_DISP_DC, TFT_DISP_RST);
+	inputDevice = new MousePointer(Bounds(0, 0, g->width(), g->height(), g->getRotation()));
+	container->setBounds(Bounds(0, 0, g->width(), g->height(), g->getRotation()));
+}
+
+GfxApplication::GfxApplication(Graphics * _g, InputDevice * _inputDevice) {
 	drawMousePointer = true;
 	refreshScreenMillis = 0;
 	refreshMouseMillis = 0;
@@ -10,12 +16,15 @@ GfxApplication::GfxApplication(void) {
 	fps = 0;
 	oldfps = 0;
 
+
 	// Starts Graphical driver:  
-	g = new Graphics(TFT_DISP_CS, TFT_DISP_DC, TFT_DISP_RST);
+	g = _g;
 
 	//Setup defaut container
 	container = new Container();
-	container->setBounds(Bounds(0, 0, g->width(), g->height(), g->getRotation()));
+	if (g!= NULL)
+		container->setBounds(Bounds(0, 0, g->width(), g->height(), g->getRotation()));
+	
 	focusedComponent = container;
 	previousFocusedComponent = container;
 
@@ -27,6 +36,8 @@ GfxApplication::GfxApplication(void) {
 	bgColor = &Color::LightGrey;
 	textColor = &Color::Black;
 	mousePointer = &Color::Black;
+
+	inputDevice = _inputDevice;
 }
 
 GfxApplication::~GfxApplication(void) {
@@ -42,13 +53,22 @@ void GfxApplication::displayFPS(boolean val) {
 
 void GfxApplication::doSetup(void) {
 	// Starts Serial Module
-	Serial.begin(115200);
+	Serial.begin(SERIAL_BAUDRATE);
 
-	pinMode(MOUSE_BUTTON_1_IO, INPUT);           // set pin to input
-	digitalWrite(MOUSE_BUTTON_1_IO, HIGH);       // turn on pullup resistors
+	inputDevice->doSetup();
 
-	pinMode(MOUSE_BUTTON_2_IO, INPUT);           // set pin to input
-	digitalWrite(MOUSE_BUTTON_2_IO, HIGH);       // turn on pullup resistors
+	//the cs chip select 
+	pinMode(SD_CS, OUTPUT);
+	digitalWrite(SD_CS, LOW);
+
+	Serial.print(F("Initializing SD card : "));
+
+	if (!SD.begin(SD_CS)) {
+		Serial.println(F("failed!"));
+	}
+	else{
+		Serial.println(F("OK!"));
+	}
 
 	// Starts Graphical driver:  
 	g->begin(1);
@@ -144,38 +164,23 @@ void GfxApplication::paint(Graphics * g)
 	container->paint(g);
 }
 
-/*********************************************************************************************
- * Refresh Mouse State
- *********************************************************************************************/
+
 void GfxApplication::updateMouseState(void) {
 	int tmp, xval, yval;
 
 	//save previous mouse state
 	oms->set(ms);
+	ms->set(inputDevice->updateMouseState());
 
-	tmp = analogRead(A1);
-	xval = tmp >= 0 ? tmp : 0;
-	tmp = analogRead(A0);
-	yval = tmp >= 0 ? tmp : 0;
-
-	if (doesMousePositionChanged(xval, yval)) {
-		updateMouseCoordinates(xval, yval);
+	if (oms->x != ms->x || oms->y != ms->y) {
 		drawMousePointer = true;
 	}
 
 	//Updates mouse button state
-	updateMouseButtonsState();
+	triggerMouseEvents();
 }
 
-boolean GfxApplication::doesMousePositionChanged(int xval, int yval) {
-	return !(((xval > AN_AXIS_CENTER_LOWER_BOUNDARY) && (xval < AN_AXIS_CENTER_HIGHER_BOUNDARY)) &&
-		((yval > AN_AXIS_CENTER_LOWER_BOUNDARY) && (yval < AN_AXIS_CENTER_HIGHER_BOUNDARY)));
-}
-
-void GfxApplication::updateMouseButtonsState() {
-	ms->b1 = !digitalRead(MOUSE_BUTTON_1_IO);
-	ms->b2 = !digitalRead(MOUSE_BUTTON_2_IO);
-
+void GfxApplication::triggerMouseEvents() {
 	MouseEvents * me = focusedComponent->getMouseEvents();
 
 	if (oms->b1 != ms->b1 && me != NULL) {
@@ -219,45 +224,3 @@ void GfxApplication::updateMouseButtonsState() {
 			me->onMouseClick(focusedComponent, MOUSE_BUTTON_2);
 	}
 }
-
-void GfxApplication::updateMouseCoordinates(int xval, int yval) {
-	//Only update if joystick is manipulated
-	convertAnalogMouseMoveToPixels(xval, yval);
-
-	/*
-	ST7735_TFTWIDTH  128
-	ST7735_TFTHEIGHT 160
-	*/
-
-	ms->x = (ms->x < 0) ? 0 : ms->x;
-	ms->y = (ms->y < 0) ? 0 : ms->y;
-
-	if (getContainer()->getBounds()->rotation) // Display horizontal
-	{
-		//Horizontal
-		ms->x = (ms->x > ST7735_TFTHEIGHT_18 - 1) ? ST7735_TFTHEIGHT_18 - 1 : ms->x;
-		ms->y = (ms->y > ST7735_TFTWIDTH - 1) ? ST7735_TFTWIDTH - 1 : ms->y;
-	}
-	else
-	{
-		//Vertical
-		ms->x = (ms->x > ST7735_TFTWIDTH - 1) ? ST7735_TFTWIDTH - 1 : ms->x;
-		ms->y = (ms->y > ST7735_TFTHEIGHT_18 - 1) ? ST7735_TFTHEIGHT_18 - 1 : ms->y;
-	}
-
-
-}
-
-void GfxApplication::convertAnalogMouseMoveToPixels(int xval, int yval) {
-	if (xval < AN_AXIS_CENTER_LOWER_BOUNDARY)
-		ms->x -= (int)((AN_AXIS_CENTER_LOWER_BOUNDARY - xval) / 100);
-	if (xval > AN_AXIS_CENTER_HIGHER_BOUNDARY)
-		ms->x += (int)((xval - AN_AXIS_CENTER_HIGHER_BOUNDARY) / 100);
-
-	if (yval < AN_AXIS_CENTER_LOWER_BOUNDARY)
-		ms->y -= (int)((AN_AXIS_CENTER_LOWER_BOUNDARY - yval) / 100);
-	if (yval > AN_AXIS_CENTER_HIGHER_BOUNDARY)
-		ms->y += (int)((yval - AN_AXIS_CENTER_HIGHER_BOUNDARY) / 100);
-}
-
-

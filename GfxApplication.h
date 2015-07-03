@@ -7,16 +7,18 @@
 #include "Component.h"
 #include "Graphics.h"
 #include "MouseEvents.h"
+#include "InputDevice.h"
+#include "MousePointer.h"
 
 class GfxApplication {
 
 public:
 	GfxApplication(void);
+	GfxApplication(Graphics *, InputDevice *);
 	~GfxApplication(void);
 
 public:
 	void doLoop(void);
-public:
 	void doSetup(void);
 	void displayFPS(boolean);
 	virtual void initialize() = 0;
@@ -26,12 +28,14 @@ protected:
 	void paint(Graphics * g);
 	void paintMousePointer(Graphics *);
 	void updateMouseState(void);
-	void convertAnalogMouseMoveToPixels(int, int);
-	boolean doesMousePositionChanged(int, int);
-	void updateMouseCoordinates(int, int);
-	void updateMouseButtonsState(void);
-
+	//void convertAnalogMouseMoveToPixels(int, int);
+	//boolean doesMousePositionChanged(int, int);
+	//void updateMouseCoordinates(int, int);
+	void triggerMouseEvents(void);
+	
 private:
+	InputDevice * inputDevice;
+
 	//Mouse related variables
 	MouseState * ms;
 	MouseState * oms;

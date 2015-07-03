@@ -42,8 +42,6 @@ void  ProgressBar::paint(Graphics * g) {
 		
 		int widthToDraw = (int)(((float)currentValue / (float)maxValue) * (float)(getBounds()->width - getOffset()->x * 2));
 
-		Serial.println(widthToDraw);
-
 		//Draws border
 		for (byte i = 0; i < getBorderSize()->getTop(); i++)
 			g->drawFastHLine(getBounds()->x + i, getBounds()->y + i, getBounds()->width -2*i, Color::DarkGrey.toAdafruitColor());
@@ -58,6 +56,7 @@ void  ProgressBar::paint(Graphics * g) {
 			g->drawFastVLine(getBounds()->x + i, getBounds()->y + i, getBounds()->height - 2 * i, Color::DarkGrey.toAdafruitColor());
 
 
+		g->fillRect(getBounds()->x + getOffset()->x, getBounds()->y + getOffset()->y, getBounds()->width - getPadding()->getLeftPlusRight() - getBorderSize()->getLeftPlusRight(), getBounds()->height - getPadding()->getTopPlusBottom() - getBorderSize()->getTopPlusBottom() , getBgColor()->toAdafruitColor());
 		g->fillRect(getBounds()->x + getOffset()->x, getBounds()->y + getOffset()->y, widthToDraw, getBounds()->height - 2 * getOffset()->y, progressBarColor->toAdafruitColor());
 
 		paintComponent = false;
